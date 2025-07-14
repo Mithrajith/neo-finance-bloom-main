@@ -15,8 +15,17 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
 # Database configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgresql://user:password@localhost/finance_db')
+database_url = os.getenv('DATABASE_URL', 'sqlite:///finance_app.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Create the database directory if using SQLite
+if database_url.startswith('sqlite:'):
+    db_path = database_url.replace('sqlite:///', '')
+    db_dir = os.path.dirname(db_path)
+    if db_dir and not os.path.exists(db_dir):
+        os.makedirs(db_dir)
+
 db = SQLAlchemy(app)
 
 # Database Models
@@ -102,14 +111,23 @@ def check_ollama_connection():
 def generate_response(prompt, context=""):
     """Generate response using Ollama Mistral model"""
     try:
-        # Enhance the prompt with financial context
+        # Enhance the prompt with financial context and formatting instructions
         enhanced_prompt = f"""You are a helpful AI financial assistant. You help users manage their finances, analyze spending patterns, create budgets, and provide financial advice.
+
+IMPORTANT FORMATTING RULES:
+- Use clear headings with ## or ### for main topics
+- Use bullet points (- ) for lists and key points
+- Use numbered lists (1. 2. 3.) for step-by-step instructions
+- Use **bold text** for important concepts or warnings
+- Use "Key Point:" format for highlighting critical information
+- Break information into digestible paragraphs
+- When providing financial advice, structure it clearly with sections
 
 Context: {context}
 
 User question: {prompt}
 
-Please provide a helpful, accurate, and concise response about personal finance management."""
+Please provide a helpful, accurate, and well-structured response about personal finance management. Format your response with clear headings, bullet points, and organized sections for better readability."""
 
         payload = {
             "model": MODEL_NAME,
@@ -385,14 +403,43 @@ if __name__ == '__main__':
     logger.info("Starting Finance AI Chat Backend...")
     logger.info(f"Using Ollama at: {OLLAMA_BASE_URL}")
     logger.info(f"Model: {MODEL_NAME}")
+    logger.info(f"Database: {app.config['SQLALCHEMY_DATABASE_URI']}")
     
     # Initialize database
     with app.app_context():
         try:
+            # Test database connection
+            db.engine.connect()
+            logger.info("Database connection successful!")
+            
+            # Create tables
             db.create_all()
             logger.info("Database tables created successfully!")
+            
+            # Add some sample data if tables are empty
+            if Transaction.query.count() == 0:
+                sample_transactions = [
+                    Transaction(date='2024-01-15', title='Grocery Shopping', type='expense', amount=125.50, category='Groceries', notes='Weekly groceries'),
+                    Transaction(date='2024-01-14', title='Salary', type='income', amount=3500.00, category='Salary', notes='Monthly salary'),
+                    Transaction(date='2024-01-13', title='Coffee', type='expense', amount=4.50, category='Food', notes='Morning coffee'),
+                ]
+                for transaction in sample_transactions:
+                    db.session.add(transaction)
+                
+                sample_budgets = [
+                    Budget(name='Groceries', budgetLimit=500.0, color='#10b981'),
+                    Budget(name='Food', budgetLimit=200.0, color='#f59e0b'),
+                    Budget(name='Transport', budgetLimit=150.0, color='#3b82f6'),
+                ]
+                for budget in sample_budgets:
+                    db.session.add(budget)
+                
+                db.session.commit()
+                logger.info("Sample data added to database!")
+                
         except Exception as e:
-            logger.error(f"Error creating database tables: {e}")
+            logger.error(f"Database initialization error: {e}")
+            logger.info("Continuing without database - some features may not work")
     
     # Check initial connection
     if check_ollama_connection():

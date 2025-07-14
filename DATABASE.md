@@ -1,8 +1,25 @@
 # Database Setup Guide
 
-## PostgreSQL Integration
+## Current Status: ✅ SQLite Working
 
-This guide explains how to set up and use PostgreSQL with Neo Finance Bloom.
+The application is now configured to use **SQLite** by default, which requires **no setup** and works immediately!
+
+### Current Configuration
+- **Database**: SQLite (file-based, no server needed)
+- **Location**: `backend/finance_app.db` (created automatically)
+- **Status**: ✅ Ready to use
+
+## Quick Start (SQLite - Recommended)
+
+Your app is ready to use! Just:
+
+1. **Run the backend**: `./restart-backend.sh`
+2. **Start frontend**: `npm run dev`
+3. **Open browser**: `http://localhost:5173`
+
+## Advanced: PostgreSQL Setup (Optional)
+
+If you want to use PostgreSQL instead of SQLite:
 
 ## Prerequisites
 

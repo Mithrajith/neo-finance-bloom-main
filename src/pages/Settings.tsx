@@ -23,8 +23,8 @@ import { useNavigate } from "react-router-dom";
 
 const Settings = () => {
   const [formData, setFormData] = useState({
-    fullName: "John Doe",
-    email: "john.doe@example.com",
+    fullName: "Mithun",
+    email: "Mithun@gmail.com",
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
@@ -109,7 +109,7 @@ const Settings = () => {
                 <Avatar className="h-20 w-20">
                   <AvatarImage src="" />
                   <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
-                    JD
+                    M
                   </AvatarFallback>
                 </Avatar>
                 <div className="space-y-2">

@@ -50,6 +50,7 @@ export function AppSidebar({ isOpen }: AppSidebarProps) {
   return (
     <AnimatePresence>
       <motion.div
+        key="sidebar"
         initial={{ x: -280 }}
         animate={{ x: isOpen ? 0 : -200 }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
@@ -69,6 +70,7 @@ export function AppSidebar({ isOpen }: AppSidebarProps) {
             </div>
             {isOpen && (
               <motion.div
+                key="logo-text"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
@@ -84,6 +86,7 @@ export function AppSidebar({ isOpen }: AppSidebarProps) {
         <div className="p-3 space-y-1">
           {isOpen && (
             <motion.p
+              key="menu-title"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="text-sidebar-foreground/60 text-xs uppercase tracking-wider font-medium px-3 py-3"
@@ -113,6 +116,7 @@ export function AppSidebar({ isOpen }: AppSidebarProps) {
                 <item.icon className="h-5 w-5 flex-shrink-0" />
                 {isOpen && (
                   <motion.span
+                    key={`${item.title}-text`}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -131,6 +135,7 @@ export function AppSidebar({ isOpen }: AppSidebarProps) {
       {/* Overlay for mobile */}
       {isOpen && (
         <motion.div
+          key="overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

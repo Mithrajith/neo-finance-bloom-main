@@ -23,7 +23,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 const summaryData = [
   {
     title: "Total Balance",
-    value: "$24,500.00",
+    value: "24,500.00",
     change: "+12.5%",
     trend: "up",
     icon: DollarSign,
@@ -37,7 +37,7 @@ const summaryData = [
   },
   {
     title: "Monthly Expenses",
-    value: "$3,750.00",
+    value: "3,750.00",
     change: "-2.1%",
     trend: "down",
     icon: TrendingDown,

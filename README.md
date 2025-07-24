@@ -2,29 +2,29 @@
 
 ## Project Overview
 
-Neo Finance Bloom is a modern personal finance management application built with React, TypeScript, and Tailwind CSS, featuring AI-powered financial assistance and persistent data storage with PostgreSQL.
+Neo Finance Bloom is a modern personal finance management application built with React, TypeScript, and Tailwind CSS, featuring AI-powered financial assistance and persistent data storage with SQLite.
 
 ### 🚀 Key Features:
 - 💰 **Transaction Management**: Add, edit, delete, and search transactions
 - 📊 **Budget Tracking**: Create and monitor budget categories with visual progress
-- 🤖 **AI Financial Assistant**: Chat with an AI powered by Ollama/Mistral for financial advice
+- 🤖 **AI Financial Assistant**: Chat with an AI powered by Ollama/gemma:2b for financial advice
 - 📈 **Financial Analysis**: AI-powered insights into your spending patterns
-- 🗄️ **Persistent Storage**: PostgreSQL database for secure data persistence
+- 🗄️ **Persistent Storage**: SQLite database for secure data persistence
 - 📱 **Responsive Design**: Beautiful, modern UI that works on all devices
 
 ## 🤖 AI Chat Feature
 
-This project includes an AI-powered financial assistant using **Ollama** with the **Mistral** model and a **Python Flask backend**!
+This project includes an AI-powered financial assistant using **Ollama** with the **gemma:2b** model and a **Python Flask backend**!
 
 ### AI Features:
 - 💬 Real-time AI chat for financial advice
 - 📊 AI-powered financial analysis and insights
-- 🧠 Powered by Mistral model via Ollama
+- 🧠 Powered by gemma:2b model via Ollama
 - � Context-aware responses based on your financial data
 
 ## 🗄️ Database Integration
 
-The application uses **PostgreSQL** for persistent data storage, ensuring your financial data is securely saved and accessible across sessions.
+The application uses **SQLite** for persistent data storage, ensuring your financial data is securely saved and accessible across sessions. SQLite is a lightweight, file-based database that requires no server setup.
 
 ### Database Features:
 - 📝 Persistent transaction storage
@@ -39,9 +39,9 @@ The application uses **PostgreSQL** for persistent data storage, ensuring your f
    ./setup.sh
    ```
    This will:
-   - Set up PostgreSQL database
+   - Set up SQLite database (automatic, no server needed)
    - Install Python dependencies
-   - Download the Mistral AI model
+   - Download the gemma:2b AI model
 
 2. **Start all services**:
    ```bash
@@ -56,7 +56,7 @@ The application uses **PostgreSQL** for persistent data storage, ensuring your f
 
 Before running the setup script, make sure you have:
 
-- **PostgreSQL**: Database server ([Installation Guide](https://www.postgresql.org/download/))
+- **SQLite**: Built into Python (no separate installation needed)
 - **Ollama**: AI model runner ([https://ollama.ai](https://ollama.ai))
 - **Python 3.8+**: For the backend
 - **Node.js**: For the frontend
@@ -87,15 +87,16 @@ The Python backend provides these endpoints:
 
 There are several ways of editing your application.
 
-**Use Lovable**
+**Local Development**
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/00e1c7ab-e69a-460d-8051-93223c75f975) and start prompting.
+You can work locally using your preferred IDE:
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+1. Clone this repository
+2. Install dependencies: `npm install`
+3. Setup backend: `cd backend && pip install -r requirements.txt`
+4. Start development servers:
+   - Backend: `cd backend && python app.py`
+   - Frontend: `npm run dev`
 
 The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
@@ -141,12 +142,25 @@ This project is built with:
 
 ## How can I deploy this project?
 
-Simply open [Lovable](https://lovable.dev/projects/00e1c7ab-e69a-460d-8051-93223c75f975) and click on Share -> Publish.
+### Frontend Deployment
+You can deploy the frontend to any static hosting service:
 
-## Can I connect a custom domain to my Lovable project?
+1. **Build for production**: `npm run build`
+2. **Deploy the `dist/` folder** to:
+   - Vercel
+   - Netlify
+   - GitHub Pages
+   - Firebase Hosting
+   - Any static hosting service
 
-Yes, you can!
+### Backend Deployment
+Deploy the Python Flask backend to:
+- Heroku
+- Railway
+- Render
+- DigitalOcean App Platform
+- AWS/GCP/Azure
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Custom Domain
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+You can connect your own custom domain to your deployed application by configuring DNS settings with your hosting provider.

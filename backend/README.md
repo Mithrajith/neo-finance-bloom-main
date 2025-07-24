@@ -1,14 +1,14 @@
 # Finance AI Chat Backend
 
-This is the Python backend for the AI chat functionality using Ollama with the Mistral model.
+This is the Python backend for the AI chat functionality using Ollama with the gemma:2b model.
 
 ## Prerequisites
 
 1. **Install Ollama**: Download and install Ollama from [https://ollama.ai](https://ollama.ai)
 
-2. **Install Mistral model**:
+2. **Install gemma:2b model**:
    ```bash
-   ollama pull mistral
+   ollama pull gemma:2b
    ```
 
 3. **Python 3.8+**: Make sure you have Python installed
@@ -41,7 +41,7 @@ The backend will start on `http://localhost:5000`
 ### Chat
 - **POST** `/api/chat`
 - Body: `{"message": "your question", "context": "optional context"}`
-- Returns AI response from Mistral model
+- Returns AI response from gemma:2b model
 
 ### Financial Analysis
 - **POST** `/api/financial-analysis`
@@ -68,11 +68,11 @@ curl -X POST http://localhost:5000/api/financial-analysis \
 ## Configuration
 
 - **Ollama URL**: Default is `http://localhost:11434`
-- **Model**: Uses `mistral` model by default
+- **Model**: Uses `gemma:2b` model by default
 - **Port**: Backend runs on port 5000
 
 ## Troubleshooting
 
 1. **Ollama not found**: Make sure Ollama is installed and running
-2. **Mistral model not found**: Run `ollama pull mistral` to download the model
+2. **gemma:2b model not found**: Run `ollama pull gemma:2b` to download the model
 3. **Connection issues**: Check if Ollama is running on the correct port (11434)

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-echo "🚀 Setting up Neo Finance Bloom with AI Chat Integration & PostgreSQL"
-echo "=================================================================="
+echo "🚀 Setting up Neo Finance Bloom with AI Chat Integration & SQLite"
+echo "=============================================================="
 
 # Check if Python is installed
 if ! command -v python3 &> /dev/null; then
@@ -9,28 +9,19 @@ if ! command -v python3 &> /dev/null; then
     exit 1
 fi
 
-# Check if PostgreSQL is installed
-if ! command -v psql &> /dev/null; then
-    echo "❌ PostgreSQL is not installed."
-    echo "📥 Please install PostgreSQL:"
-    echo "   Ubuntu/Debian: sudo apt-get install postgresql postgresql-contrib"
-    echo "   macOS: brew install postgresql"
-    echo "   Windows: Download from https://www.postgresql.org/download/"
-    exit 1
-fi
-
 # Check if Ollama is installed
 if ! command -v ollama &> /dev/null; then
     echo "❌ Ollama is not installed."
     echo "📥 Please install Ollama from: https://ollama.ai"
-    echo "   Then run: ollama pull mistral"
+    echo "   Then run: ollama pull gemma:2b"
     exit 1
 fi
 
-echo "✅ Python, PostgreSQL, and Ollama found!"
+echo "✅ Python and Ollama found!"
+echo "✅ SQLite is built into Python - no separate installation needed!"
 
-# Setup PostgreSQL database
-echo "🗄️ Setting up PostgreSQL database..."
+# Setup SQLite database
+echo "🗄️ Setting up SQLite database..."
 ./setup-db.sh
 
 # Setup Python backend
@@ -53,14 +44,14 @@ pip install -r requirements.txt
 
 echo "✅ Python backend setup complete!"
 
-# Check if Mistral model is available
-echo "🤖 Checking Mistral model..."
-if ollama list | grep -q "mistral"; then
-    echo "✅ Mistral model is available!"
+# Check if gemma:2b model is available
+echo "🤖 Checking gemma:2b model..."
+if ollama list | grep -q "gemma:2b"; then
+    echo "✅ gemma:2b model is available!"
 else
-    echo "📥 Downloading Mistral model (this may take a few minutes)..."
-    ollama pull mistral
-    echo "✅ Mistral model downloaded!"
+    echo "📥 Downloading gemma:2b model (this may take a few minutes)..."
+    ollama pull gemma:2b
+    echo "✅ gemma:2b model downloaded!"
 fi
 
 echo ""

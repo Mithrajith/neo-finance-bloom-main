@@ -15,6 +15,8 @@ interface Budget {
   name: string;
   budgetLimit: number;
   spent: number;
+  income: number;
+  remaining: number;
   color: string;
   period: string;
   created_at?: string;
@@ -23,6 +25,8 @@ interface Budget {
 const Budgets = () => {
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -66,6 +70,25 @@ const Budgets = () => {
     }
   };
 
+  const handleEditCategory = (budget: Budget) => {
+    setEditingBudget(budget);
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateCategory = async (categoryData: { name: string; budgetLimit: number; color: string }) => {
+    if (!editingBudget) return;
+    
+    try {
+      await budgetAPI.update(editingBudget.id, categoryData);
+      await fetchBudgets(); // Refresh the list
+      setIsEditModalOpen(false);
+      setEditingBudget(null);
+    } catch (error) {
+      console.error("Failed to update budget:", error);
+      alert("Failed to update budget. Please try again.");
+    }
+  };
+
   const handleDeleteCategory = async (id: number) => {
     if (!confirm("Are you sure you want to delete this budget category?")) {
       return;
@@ -82,7 +105,8 @@ const Budgets = () => {
 
   const totalBudget = budgets.reduce((sum, budget) => sum + budget.budgetLimit, 0);
   const totalSpent = budgets.reduce((sum, budget) => sum + budget.spent, 0);
-  const totalRemaining = totalBudget - totalSpent;
+  const totalIncome = budgets.reduce((sum, budget) => sum + budget.income, 0);
+  const totalRemaining = totalBudget + totalIncome - totalSpent;
 
   if (isLoading) {
     return (
@@ -206,7 +230,6 @@ const Budgets = () => {
           {budgets.map((budget, index) => {
             const percentage = calculatePercentage(budget.spent, budget.budgetLimit);
             const status = getBudgetStatus(budget.spent, budget.budgetLimit);
-            const remaining = budget.budgetLimit - budget.spent;
 
             return (
               <motion.div
@@ -228,6 +251,14 @@ const Budgets = () => {
                         {status === "warning" && (
                           <AlertTriangle className="h-5 w-5 text-yellow-500" />
                         )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-muted-foreground hover:text-primary"
+                          onClick={() => handleEditCategory(budget)}
+                        >
+                          <Edit className="h-3 w-3" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -266,6 +297,14 @@ const Budgets = () => {
                           ${budget.spent.toLocaleString()}
                         </span>
                       </div>
+                      {budget.income > 0 && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">Income</span>
+                          <span className="font-medium text-green-600">
+                            +${budget.income.toLocaleString()}
+                          </span>
+                        </div>
+                      )}
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">Budget</span>
                         <span className="font-medium">
@@ -276,16 +315,14 @@ const Budgets = () => {
                         <span className="text-sm font-medium">Remaining</span>
                         <div className="flex items-center gap-2">
                           <Badge
-                            variant={status === "good" ? "default" : "destructive"}
+                            variant={budget.remaining >= 0 ? "default" : "destructive"}
                             className={
-                              status === "good"
+                              budget.remaining >= 0
                                 ? "bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400"
-                                : status === "warning"
-                                ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400"
                                 : "bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400"
                             }
                           >
-                            ${remaining.toLocaleString()}
+                            ${budget.remaining.toLocaleString()}
                           </Badge>
                         </div>
                       </div>
@@ -293,7 +330,12 @@ const Budgets = () => {
 
                     {/* Action Buttons */}
                     <div className="flex gap-2 pt-2">
-                      <Button variant="outline" size="sm" className="flex-1">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => handleEditCategory(budget)}
+                      >
                         Edit
                       </Button>
                       <Button variant="outline" size="sm" className="flex-1">
@@ -313,6 +355,24 @@ const Budgets = () => {
         onClose={() => setIsAddModalOpen(false)}
         onAddCategory={handleAddCategory}
       />
+      
+      {/* Edit Modal */}
+      {editingBudget && (
+        <AddCategoryModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setEditingBudget(null);
+          }}
+          onAddCategory={handleUpdateCategory}
+          initialData={{
+            name: editingBudget.name,
+            budgetLimit: editingBudget.budgetLimit,
+            color: editingBudget.color
+          }}
+          isEditing={true}
+        />
+      )}
     </Layout>
   );
 };

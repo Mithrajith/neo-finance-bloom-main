@@ -34,7 +34,7 @@
 - Better spacing and padding for readability
 
 ### 5. **Better Visual Design**
-- Enhanced header with "Powered by Mistral" indicator
+- Enhanced header with "Powered by gemma:2b" indicator
 - Improved message styling with better contrast
 - Added fullscreen mode for extended conversations
 - More professional and modern appearance

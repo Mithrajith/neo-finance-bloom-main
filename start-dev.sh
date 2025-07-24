@@ -45,13 +45,13 @@ else
     echo "✅ Ollama is already running"
 fi
 
-# Check if Mistral model is available
-echo "🔍 Checking Mistral model..."
-if ! ollama list | grep -q "mistral"; then
-    echo "📥 Pulling Mistral model..."
-    ollama pull mistral
+# Check if gemma:2b model is available
+echo "🔍 Checking gemma:2b model..."
+if ! ollama list | grep -q "gemma:2b"; then
+    echo "📥 Pulling gemma:2b model..."
+    ollama pull gemma:2b
 fi
-echo "✅ Mistral model ready!"
+echo "✅ gemma:2b model ready!"
 
 # Start Python backend
 echo "🐍 Starting Python backend..."

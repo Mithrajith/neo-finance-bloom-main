@@ -1,57 +1,50 @@
 #!/bin/bash
 
-# PostgreSQL Database Setup Script for Neo Finance Bloom
-echo "Setting up PostgreSQL database for Neo Finance Bloom..."
+# SQLite Database Setup Script for Neo Finance Bloom
+echo "Setting up SQLite database for Neo Finance Bloom..."
 
-# Check if PostgreSQL is installed
-if ! command -v psql &> /dev/null; then
-    echo "PostgreSQL is not installed. Please install it first:"
-    echo "Ubuntu/Debian: sudo apt-get install postgresql postgresql-contrib"
-    echo "macOS: brew install postgresql"
-    echo "Windows: Download from https://www.postgresql.org/download/"
-    exit 1
-fi
+# SQLite is built into Python, no installation required
+echo "✅ SQLite is built into Python - no installation required!"
 
 # Database configuration
-DB_NAME="finance_db"
-DB_USER="finance_user"
-DB_PASSWORD="finance_password"
+DB_FILE="backend/finance_app.db"
 
-echo "Creating PostgreSQL database and user..."
-
-# Create database and user (run as postgres user)
-sudo -u postgres psql << EOF
--- Create database
-CREATE DATABASE $DB_NAME;
-
--- Create user with password
-CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';
-
--- Grant privileges
-GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;
-
--- Make user owner of the database
-ALTER DATABASE $DB_NAME OWNER TO $DB_USER;
-
--- Exit
-\q
-EOF
-
-if [ $? -eq 0 ]; then
-    echo "✓ Database '$DB_NAME' and user '$DB_USER' created successfully!"
-    echo "✓ Database connection string: postgresql://$DB_USER:$DB_PASSWORD@localhost:5432/$DB_NAME"
-    
-    # Update .env file with the correct database URL
-    echo "Updating backend/.env file..."
-    sed -i "s|DATABASE_URL=.*|DATABASE_URL=postgresql://$DB_USER:$DB_PASSWORD@localhost:5432/$DB_NAME|" backend/.env
-    
-    echo "✓ Database setup complete!"
-    echo ""
-    echo "Next steps:"
-    echo "1. Install Python dependencies: cd backend && pip install -r requirements.txt"
-    echo "2. Start the backend server: cd backend && python app.py"
-    echo "3. Start the frontend: npm install && npm run dev"
-else
-    echo "✗ Error creating database. Please check PostgreSQL installation and permissions."
-    exit 1
+# Create backend directory if it doesn't exist
+if [ ! -d "backend" ]; then
+    mkdir -p backend
+    echo "✓ Created backend directory"
 fi
+
+# SQLite database file will be created automatically by the application
+echo "✓ Database file will be created at: $DB_FILE"
+echo "✓ No manual database setup required - SQLite handles everything automatically!"
+
+# Create or update .env file for backend
+ENV_FILE="backend/.env"
+echo "Updating $ENV_FILE file..."
+
+# Create .env file if it doesn't exist
+if [ ! -f "$ENV_FILE" ]; then
+    echo "Creating $ENV_FILE file..."
+    cat > "$ENV_FILE" << EOF
+# SQLite Database Configuration
+DATABASE_URL=sqlite:///finance_app.db
+
+# Flask Configuration
+FLASK_ENV=development
+FLASK_DEBUG=True
+EOF
+else
+    # Update existing .env file
+    sed -i.bak "s|DATABASE_URL=.*|DATABASE_URL=sqlite:///finance_app.db|" "$ENV_FILE" && rm -f "$ENV_FILE.bak"
+fi
+
+echo "✓ Environment configuration updated!"
+echo "✓ Database setup complete!"
+echo ""
+echo "Next steps:"
+echo "1. Install Python dependencies: cd backend && pip install -r requirements.txt"
+echo "2. Start the backend server: cd backend && python app.py"
+echo "3. Start the frontend: npm install && npm run dev"
+echo ""
+echo "📝 The SQLite database will be created automatically when you first run the application!"

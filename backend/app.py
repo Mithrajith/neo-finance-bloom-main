@@ -14,17 +14,16 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
-# Database configuration
+# Database configuration - SQLite only
 database_url = os.getenv('DATABASE_URL', 'sqlite:///finance_app.db')
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Create the database directory if using SQLite
-if database_url.startswith('sqlite:'):
-    db_path = database_url.replace('sqlite:///', '')
-    db_dir = os.path.dirname(db_path)
-    if db_dir and not os.path.exists(db_dir):
-        os.makedirs(db_dir)
+# Create the database directory if needed
+db_path = database_url.replace('sqlite:///', '')
+db_dir = os.path.dirname(db_path)
+if db_dir and not os.path.exists(db_dir):
+    os.makedirs(db_dir)
 
 db = SQLAlchemy(app)
 
@@ -64,17 +63,28 @@ class Budget(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
-        # Calculate spent amount from transactions
-        spent = db.session.query(db.func.sum(Transaction.amount)).filter(
+        # Calculate spent amount from expenses
+        expenses = db.session.query(db.func.sum(Transaction.amount)).filter(
             Transaction.category == self.name,
             Transaction.type == 'expense'
         ).scalar() or 0
+        
+        # Calculate income for this category
+        income = db.session.query(db.func.sum(Transaction.amount)).filter(
+            Transaction.category == self.name,
+            Transaction.type == 'income'
+        ).scalar() or 0
+        
+        # Calculate remaining: budget + income - expenses
+        remaining = self.budgetLimit + income - expenses
         
         return {
             'id': self.id,
             'name': self.name,
             'budgetLimit': self.budgetLimit,
-            'spent': float(spent),
+            'spent': float(expenses),
+            'income': float(income),
+            'remaining': float(remaining),
             'color': self.color,
             'period': self.period,
             'created_at': self.created_at.isoformat() if self.created_at else None
@@ -86,7 +96,7 @@ logger = logging.getLogger(__name__)
 
 # Ollama configuration
 OLLAMA_BASE_URL = "http://localhost:11434"
-MODEL_NAME = "mistral"
+MODEL_NAME = "gemma:2b"
 
 def check_ollama_connection():
     """Check if Ollama is running and the model is available"""
@@ -109,7 +119,7 @@ def check_ollama_connection():
         return False
 
 def generate_response(prompt, context=""):
-    """Generate response using Ollama Mistral model"""
+    """Generate response using Ollama gemma:2b model"""
     try:
         # Enhance the prompt with financial context and formatting instructions
         enhanced_prompt = f"""You are a helpful AI financial assistant. You help users manage their finances, analyze spending patterns, create budgets, and provide financial advice.
@@ -340,7 +350,7 @@ def chat():
         # Check if Ollama is available
         if not check_ollama_connection():
             return jsonify({
-                'response': "I'm sorry, but the AI service is currently unavailable. Please make sure Ollama is running with the Mistral model installed.",
+                'response': "I'm sorry, but the AI service is currently unavailable. Please make sure Ollama is running with the gemma:2b model installed.",
                 'error': 'Ollama service unavailable'
             }), 503
         
@@ -445,7 +455,7 @@ if __name__ == '__main__':
     if check_ollama_connection():
         logger.info("Successfully connected to Ollama!")
     else:
-        logger.warning("Warning: Could not connect to Ollama. Make sure it's running and the Mistral model is installed.")
-        logger.info("To install Mistral model, run: ollama pull mistral")
+        logger.warning("Warning: Could not connect to Ollama. Make sure it's running and the gemma:2b model is installed.")
+        logger.info("To install gemma:2b model, run: ollama pull gemma:2b")
     
     app.run(debug=True, host='0.0.0.0', port=5000)

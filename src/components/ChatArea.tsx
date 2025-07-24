@@ -30,7 +30,7 @@ const ChatArea = ({ isOpen, onClose }: ChatAreaProps) => {
       id: '1',
       text: `## Welcome to Your AI Financial Assistant! 🤖
 
-I'm powered by Mistral AI and I'm here to help you with:
+I'm powered by gemma:2b AI and I'm here to help you with:
 
 - **Budget Planning**: Create and manage your budgets
 - **Expense Analysis**: Understand your spending patterns  
@@ -67,7 +67,7 @@ I'm powered by Mistral AI and I'm here to help you with:
       return data.response || 'Sorry, I could not process your request.';
     } catch (error) {
       console.error('Error calling backend API:', error);
-      return 'Sorry, I\'m having trouble connecting to the AI service. Please make sure the Python backend is running and Ollama is installed with the Mistral model.';
+      return 'Sorry, I\'m having trouble connecting to the AI service. Please make sure the Python backend is running and Ollama is installed with the gemma:2b model.';
     }
   };
 
@@ -153,7 +153,7 @@ I'm powered by Mistral AI and I'm here to help you with:
             <div className="flex items-center gap-2">
               <Bot className="h-5 w-5 text-primary" />
               <h3 className="font-semibold text-foreground">AI Financial Assistant</h3>
-              <span className="text-xs text-muted-foreground">Powered by Mistral</span>
+              <span className="text-xs text-muted-foreground">Powered by gemma:2b</span>
             </div>
             <div className="flex items-center gap-1">
               <Button

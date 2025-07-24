@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { X, Plus } from "lucide-react";
+import { X, Plus, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,12 @@ interface AddCategoryModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAddCategory: (category: { name: string; budgetLimit: number; color: string }) => void;
+  initialData?: {
+    name: string;
+    budgetLimit: number;
+    color: string;
+  };
+  isEditing?: boolean;
 }
 
 const colors = [
@@ -18,10 +24,10 @@ const colors = [
   "#6366F1", "#F97316", "#EC4899", "#14B8A6", "#84CC16"
 ];
 
-const AddCategoryModal = ({ isOpen, onClose, onAddCategory }: AddCategoryModalProps) => {
-  const [name, setName] = useState("");
-  const [budgetLimit, setBudgetLimit] = useState("");
-  const [selectedColor, setSelectedColor] = useState(colors[0]);
+const AddCategoryModal = ({ isOpen, onClose, onAddCategory, initialData, isEditing = false }: AddCategoryModalProps) => {
+  const [name, setName] = useState(initialData?.name || "");
+  const [budgetLimit, setBudgetLimit] = useState(initialData?.budgetLimit?.toString() || "");
+  const [selectedColor, setSelectedColor] = useState(initialData?.color || colors[0]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,9 +37,11 @@ const AddCategoryModal = ({ isOpen, onClose, onAddCategory }: AddCategoryModalPr
         budgetLimit: parseFloat(budgetLimit),
         color: selectedColor,
       });
-      setName("");
-      setBudgetLimit("");
-      setSelectedColor(colors[0]);
+      if (!isEditing) {
+        setName("");
+        setBudgetLimit("");
+        setSelectedColor(colors[0]);
+      }
       onClose();
     }
   };
@@ -57,7 +65,7 @@ const AddCategoryModal = ({ isOpen, onClose, onAddCategory }: AddCategoryModalPr
       >
         <Card className="card-apple">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Add New Category</CardTitle>
+            <CardTitle>{isEditing ? "Edit Category" : "Add New Category"}</CardTitle>
             <Button variant="ghost" size="icon" onClick={onClose}>
               <X className="h-4 w-4" />
             </Button>
@@ -113,8 +121,8 @@ const AddCategoryModal = ({ isOpen, onClose, onAddCategory }: AddCategoryModalPr
                   Cancel
                 </Button>
                 <Button type="submit" className="flex-1 gap-2">
-                  <Plus className="h-4 w-4" />
-                  Add Category
+                  {isEditing ? <Edit className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                  {isEditing ? "Update Category" : "Add Category"}
                 </Button>
               </div>
             </form>

@@ -325,7 +325,7 @@ const Dashboard = () => {
               AI Financial Analysis
             </DialogTitle>
             <DialogDescription>
-              AI-powered insights about your financial data using Mistral model
+              AI-powered insights about your financial data using gemma:2b model
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="max-h-[60vh] pr-4">

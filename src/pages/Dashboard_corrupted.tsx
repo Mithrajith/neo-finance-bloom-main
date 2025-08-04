@@ -86,15 +86,6 @@ const Dashboard = () => {
     setIsChatOpen(!isChatOpen);
   };
 
-  const handleOpenTransactionModal = () => {
-    try {
-      console.log('Opening transaction modal...');
-      setIsTransactionModalOpen(true);
-    } catch (error) {
-      console.error('Error opening transaction modal:', error);
-    }
-  };
-
   const handleSaveTransaction = async (transaction: Transaction) => {
     try {
       console.log('Saving transaction:', transaction);
@@ -107,6 +98,15 @@ const Dashboard = () => {
       console.error('Failed to save transaction:', error);
       // Don't close the modal if there's an error
       alert('Failed to save transaction. Please try again.');
+    }
+  };
+
+  const handleOpenTransactionModal = () => {
+    try {
+      console.log('Opening transaction modal...');
+      setIsTransactionModalOpen(true);
+    } catch (error) {
+      console.error('Error opening transaction modal:', error);
     }
   };
 
@@ -255,44 +255,38 @@ const Dashboard = () => {
           transition={{ delay: 0.1 }}
           className="grid grid-cols-1 md:grid-cols-3 gap-6"
         >
-          {isStatsLoading ? (
-            <div className="col-span-3 flex items-center justify-center h-32">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : (
-            summaryData.map((item, index) => (
-              <motion.div
-                key={item.title}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.2 + index * 0.1 }}
-              >
-                <Card className="card-apple hover:shadow-apple-xl transition-all duration-300">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      {item.title}
-                    </CardTitle>
-                    <item.icon className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-foreground">
-                      {item.value}
-                    </div>
-                    <p className={`text-xs flex items-center gap-1 mt-1 ${
-                      item.trend === "up" ? "text-green-600" : "text-red-600"
-                    }`}>
-                      {item.trend === "up" ? (
-                        <TrendingUp className="h-3 w-3" />
-                      ) : (
-                        <TrendingDown className="h-3 w-3" />
-                      )}
-                      {item.change} from last month
-                    </p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))
-          )}
+          {summaryData.map((item, index) => (
+            <motion.div
+              key={item.title}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2 + index * 0.1 }}
+            >
+              <Card className="card-apple hover:shadow-apple-xl transition-all duration-300">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    {item.title}
+                  </CardTitle>
+                  <item.icon className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-foreground">
+                    {item.value}
+                  </div>
+                  <p className={`text-xs flex items-center gap-1 mt-1 ${
+                    item.trend === "up" ? "text-green-600" : "text-red-600"
+                  }`}>
+                    {item.trend === "up" ? (
+                      <TrendingUp className="h-3 w-3" />
+                    ) : (
+                      <TrendingDown className="h-3 w-3" />
+                    )}
+                    {item.change} from last month
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
         </motion.div>
 
         {/* Charts Section */}

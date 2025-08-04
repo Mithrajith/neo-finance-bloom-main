@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,51 +6,174 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from "recharts";
 import { Download, Calendar, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
+import { transactionAPI, budgetAPI } from "@/lib/api";
 
-// Dummy data for reports
-const monthlyTrends = [
-  { month: "Jul", income: 8200, expenses: 3750, savings: 4450 },
-  { month: "Aug", income: 8500, expenses: 4200, savings: 4300 },
-  { month: "Sep", income: 8000, expenses: 3500, savings: 4500 },
-  { month: "Oct", income: 8800, expenses: 4100, savings: 4700 },
-  { month: "Nov", income: 8200, expenses: 3900, savings: 4300 },
-  { month: "Dec", income: 9200, expenses: 4500, savings: 4700 },
-];
+interface Transaction {
+  id: number;
+  date: string;
+  title: string;
+  type: 'income' | 'expense';
+  amount: number;
+  category: string;
+  notes?: string;
+}
 
-const categoryAnalysis = [
-  { category: "Food & Dining", amount: 1200, percentage: 32, color: "#0EA5E9" },
-  { category: "Transportation", amount: 800, percentage: 21, color: "#8B5CF6" },
-  { category: "Shopping", amount: 600, percentage: 16, color: "#F59E0B" },
-  { category: "Entertainment", amount: 500, percentage: 13, color: "#EF4444" },
-  { category: "Utilities", amount: 400, percentage: 11, color: "#10B981" },
-  { category: "Others", amount: 250, percentage: 7, color: "#6366F1" },
-];
-
-const savingsGoals = [
-  { goal: "Emergency Fund", target: 10000, current: 7500, color: "#0EA5E9" },
-  { goal: "Vacation", target: 3000, current: 1800, color: "#F59E0B" },
-  { goal: "New Car", target: 25000, current: 12000, color: "#10B981" },
-];
+interface Budget {
+  id: number;
+  name: string;
+  budgetLimit: number;
+  spent: number;
+  remaining: number;
+  color: string;
+}
 
 const Reports = () => {
   const [selectedPeriod, setSelectedPeriod] = useState("6months");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      const [transactionsData, budgetsData] = await Promise.all([
+        transactionAPI.getAll(),
+        budgetAPI.getAll()
+      ]);
+      setTransactions(transactionsData);
+      setBudgets(budgetsData);
+    } catch (error) {
+      console.error('Failed to fetch data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Process data for charts
+  const processMonthlyTrends = () => {
+    const monthlyData = new Map();
+    
+    transactions.forEach(transaction => {
+      const date = new Date(transaction.date);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const monthName = date.toLocaleDateString('en-US', { month: 'short' });
+      
+      if (!monthlyData.has(monthKey)) {
+        monthlyData.set(monthKey, {
+          month: monthName,
+          income: 0,
+          expenses: 0,
+          savings: 0
+        });
+      }
+      
+      const data = monthlyData.get(monthKey);
+      if (transaction.type === 'income') {
+        data.income += transaction.amount;
+      } else {
+        data.expenses += transaction.amount;
+      }
+      data.savings = data.income - data.expenses;
+    });
+    
+    return Array.from(monthlyData.values()).slice(-6); // Last 6 months
+  };
+
+  const processCategoryAnalysis = () => {
+    const categoryTotals = new Map();
+    const totalExpenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+    
+    transactions.filter(t => t.type === 'expense').forEach(transaction => {
+      if (!categoryTotals.has(transaction.category)) {
+        const budget = budgets.find(b => b.name === transaction.category);
+        categoryTotals.set(transaction.category, {
+          category: transaction.category,
+          amount: 0,
+          color: budget?.color || '#6366F1'
+        });
+      }
+      categoryTotals.get(transaction.category).amount += transaction.amount;
+    });
+    
+    return Array.from(categoryTotals.values()).map(cat => ({
+      ...cat,
+      percentage: totalExpenses > 0 ? Math.round((cat.amount / totalExpenses) * 100) : 0
+    }));
+  };
+
+  const monthlyTrends = processMonthlyTrends();
+  const categoryAnalysis = processCategoryAnalysis();
 
   // Calculate key metrics
-  const totalIncome = monthlyTrends.reduce((sum, month) => sum + month.income, 0);
-  const totalExpenses = monthlyTrends.reduce((sum, month) => sum + month.expenses, 0);
-  const totalSavings = monthlyTrends.reduce((sum, month) => sum + month.savings, 0);
-  const avgMonthlySavings = totalSavings / monthlyTrends.length;
+  const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+  const totalExpenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+  const totalSavings = totalIncome - totalExpenses;
+  const avgMonthlySavings = monthlyTrends.length > 0 ? totalSavings / monthlyTrends.length : 0;
+
+  // Create savings goals from budgets
+  const savingsGoals = budgets.map(budget => ({
+    goal: budget.name,
+    target: budget.budgetLimit,
+    current: Math.max(0, budget.remaining),
+    color: budget.color
+  }));
+
+  const exportToPDF = async () => {
+    try {
+      // Simple PDF export using window.print for now
+      // We can implement a more sophisticated PDF solution later
+      const printContent = `
+        <html>
+          <head><title>Financial Report</title></head>
+          <body>
+            <h1>Financial Report</h1>
+            <h2>Summary</h2>
+            <p>Total Income: $${totalIncome.toFixed(2)}</p>
+            <p>Total Expenses: $${totalExpenses.toFixed(2)}</p>
+            <p>Total Savings: $${totalSavings.toFixed(2)}</p>
+            
+            <h2>Category Breakdown</h2>
+            ${categoryAnalysis.map(cat => 
+              `<p>${cat.category}: $${cat.amount.toFixed(2)} (${cat.percentage}%)</p>`
+            ).join('')}
+            
+            <h2>Budget Overview</h2>
+            ${budgets.map(budget => 
+              `<p>${budget.name}: $${budget.spent.toFixed(2)} of $${budget.budgetLimit.toFixed(2)} spent</p>`
+            ).join('')}
+          </body>
+        </html>
+      `;
+      
+      const printWindow = window.open('', '_blank');
+      printWindow?.document.write(printContent);
+      printWindow?.document.close();
+      printWindow?.print();
+    } catch (error) {
+      console.error('Failed to export PDF:', error);
+    }
+  };
 
   return (
     <Layout>
       <div className="space-y-8">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex justify-between items-center"
-        >
+        {isLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <>
+            {/* Header */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex justify-between items-center"
+            >
           <div>
             <h1 className="text-3xl font-bold text-foreground">Reports & Analytics</h1>
             <p className="text-muted-foreground mt-1">
@@ -62,7 +185,10 @@ const Reports = () => {
               <Calendar className="h-4 w-4" />
               Date Range
             </Button>
-            <Button className="btn-primary gap-2">
+            <Button 
+              onClick={exportToPDF}
+              className="btn-primary gap-2"
+            >
               <Download className="h-4 w-4" />
               Export PDF
             </Button>
@@ -326,6 +452,8 @@ const Reports = () => {
             </CardContent>
           </Card>
         </motion.div>
+          </>
+        )}
       </div>
     </Layout>
   );

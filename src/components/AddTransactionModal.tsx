@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useState, useEffect } from "react";
+import { budgetAPI } from "@/lib/api";
 
 export interface Transaction {
   id?: number;
@@ -27,6 +28,11 @@ export interface Transaction {
   amount: number;
   category: string;
   notes?: string;
+}
+
+interface Category {
+  name: string;
+  color: string;
 }
 
 interface AddTransactionModalProps {
@@ -50,15 +56,50 @@ export const AddTransactionModal = ({
     category: "",
     notes: "",
   });
+  
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Fetch categories when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchCategories();
+    }
+  }, [isOpen]);
+
+  const fetchCategories = async () => {
+    try {
+      setIsLoading(true);
+      const response = await budgetAPI.getCategories();
+      setCategories(response);
+    } catch (error) {
+      console.error('Failed to fetch categories:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (transactionToEdit) {
-      setTransaction({
-        ...transactionToEdit,
-        date: new Date(transactionToEdit.date).toISOString().split("T")[0],
-      });
-    } else {
-      // Reset to default when adding a new transaction
+    try {
+      if (transactionToEdit) {
+        setTransaction({
+          ...transactionToEdit,
+          date: new Date(transactionToEdit.date).toISOString().split("T")[0],
+        });
+      } else {
+        // Reset to default when adding a new transaction
+        setTransaction({
+          date: new Date().toISOString().split("T")[0],
+          title: "",
+          type: "expense",
+          amount: 0,
+          category: "",
+          notes: "",
+        });
+      }
+    } catch (error) {
+      console.error('Error setting transaction data:', error);
+      // Set safe defaults
       setTransaction({
         date: new Date().toISOString().split("T")[0],
         title: "",
@@ -71,7 +112,27 @@ export const AddTransactionModal = ({
   }, [transactionToEdit, isOpen]);
 
   const handleSave = () => {
-    onSave(transaction);
+    try {
+      // Basic validation
+      if (!transaction.title.trim()) {
+        alert('Please enter a title for the transaction');
+        return;
+      }
+      if (!transaction.category.trim()) {
+        alert('Please select a category');
+        return;
+      }
+      if (transaction.amount <= 0) {
+        alert('Please enter a valid amount');
+        return;
+      }
+      
+      console.log('Saving transaction from modal:', transaction);
+      onSave(transaction);
+    } catch (error) {
+      console.error('Error in handleSave:', error);
+      alert('An error occurred while saving the transaction');
+    }
   };
 
   return (
@@ -155,14 +216,34 @@ export const AddTransactionModal = ({
             <Label htmlFor="category" className="text-right">
               Category
             </Label>
-            <Input
-              id="category"
+            <Select
               value={transaction.category}
-              onChange={(e) =>
-                setTransaction({ ...transaction, category: e.target.value })
+              onValueChange={(value: string) =>
+                setTransaction({ ...transaction, category: value })
               }
-              className="col-span-3"
-            />
+            >
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select a category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectItem key={category.name} value={category.name}>
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: category.color }}
+                      />
+                      {category.name}
+                    </div>
+                  </SelectItem>
+                ))}
+                {categories.length === 0 && (
+                  <SelectItem value="" disabled>
+                    {isLoading ? "Loading categories..." : "No categories found"}
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="notes" className="text-right">

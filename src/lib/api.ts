@@ -5,6 +5,7 @@ const API_BASE_URL = 'http://localhost:5000/api';
 async function apiRequest(endpoint: string, options: RequestInit = {}) {
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      credentials: 'include', // Include cookies for session management
       headers: {
         'Content-Type': 'application/json',
         ...options.headers,
@@ -13,7 +14,8 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
     });
 
     if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `API Error: ${response.status} ${response.statusText}`);
     }
 
     return await response.json();
@@ -22,6 +24,63 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
     throw error;
   }
 }
+
+// Authentication API functions
+export const authAPI = {
+  // Register a new user
+  register: (userData: {
+    full_name: string;
+    email: string;
+    password: string;
+  }) => apiRequest('/register', {
+    method: 'POST',
+    body: JSON.stringify(userData),
+  }),
+
+  // Login user
+  login: (credentials: {
+    email: string;
+    password: string;
+  }) => apiRequest('/login', {
+    method: 'POST',
+    body: JSON.stringify(credentials),
+  }),
+
+  // Logout user
+  logout: () => apiRequest('/logout', {
+    method: 'POST',
+  }),
+
+  // Get current user
+  getCurrentUser: () => apiRequest('/me'),
+
+  // Update user settings
+  updateSettings: (settings: {
+    full_name?: string;
+    email?: string;
+    current_password?: string;
+    new_password?: string;
+    currency?: string;
+    language?: string;
+    notifications?: {
+      budget_alerts?: boolean;
+      monthly_reports?: boolean;
+      transaction_updates?: boolean;
+      security_alerts?: boolean;
+    };
+  }) => apiRequest('/settings', {
+    method: 'PUT',
+    body: JSON.stringify(settings),
+  }),
+
+  updatePassword: (currentPassword: string, newPassword: string) => apiRequest('/settings', {
+    method: 'PUT',
+    body: JSON.stringify({
+      current_password: currentPassword,
+      new_password: newPassword,
+    }),
+  }),
+};
 
 // Transaction API functions
 export const transactionAPI = {
@@ -65,6 +124,9 @@ export const budgetAPI = {
   // Get all budgets
   getAll: () => apiRequest('/budgets'),
 
+  // Get categories for dropdowns
+  getCategories: () => apiRequest('/categories'),
+
   // Add a new budget
   create: (budget: {
     name: string;
@@ -91,6 +153,12 @@ export const budgetAPI = {
   delete: (id: number) => apiRequest(`/budgets/${id}`, {
     method: 'DELETE',
   }),
+};
+
+// Dashboard API functions
+export const dashboardAPI = {
+  // Get dashboard statistics
+  getStats: () => apiRequest('/dashboard-stats'),
 };
 
 // Chat API function (existing)

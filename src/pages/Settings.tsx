@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,11 +20,18 @@ import {
   Save
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { authAPI } from "@/lib/api";
 
 const Settings = () => {
+  const { user, logout } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  
   const [formData, setFormData] = useState({
-    fullName: "Mithun",
-    email: "Mithun@gmail.com",
+    fullName: "",
+    email: "",
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
@@ -38,7 +45,27 @@ const Settings = () => {
     },
   });
 
-  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Load user data when component mounts
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        fullName: user.full_name || "",
+        email: user.email || "",
+        currency: user.currency || "USD",
+        language: user.language || "en",
+        notifications: {
+          budgetAlerts: user.notifications?.budget_alerts ?? true,
+          monthlyReports: user.notifications?.monthly_reports ?? true,
+          transactionUpdates: user.notifications?.transaction_updates ?? false,
+          securityAlerts: user.notifications?.security_alerts ?? true,
+        },
+      }));
+    }
+  }, [user]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -57,14 +84,85 @@ const Settings = () => {
     }));
   };
 
-  const handleSaveChanges = () => {
-    // Handle save logic here
-    console.log("Saving changes:", formData);
+  const handleSaveChanges = async () => {
+    setIsSaving(true);
+    
+    try {
+      // Update user settings
+      await authAPI.updateSettings({
+        full_name: formData.fullName,
+        email: formData.email,
+        currency: formData.currency,
+        language: formData.language,
+        notifications: {
+          budget_alerts: formData.notifications.budgetAlerts,
+          monthly_reports: formData.notifications.monthlyReports,
+          transaction_updates: formData.notifications.transactionUpdates,
+          security_alerts: formData.notifications.securityAlerts,
+        }
+      });
+
+      // Update password if provided
+      if (formData.currentPassword && formData.newPassword) {
+        if (formData.newPassword !== formData.confirmPassword) {
+          toast({
+            title: "Error",
+            description: "New passwords don't match",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (formData.newPassword.length < 6) {
+          toast({
+            title: "Error", 
+            description: "Password must be at least 6 characters long",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        await authAPI.updatePassword(formData.currentPassword, formData.newPassword);
+        
+        // Clear password fields
+        setFormData(prev => ({
+          ...prev,
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        }));
+      }
+
+      toast({
+        title: "Success",
+        description: "Settings saved successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to save settings",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleLogout = () => {
-    // Handle logout logic here
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast({
+        title: "Success",
+        description: "You have been logged out successfully",
+      });
+      navigate("/login");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to logout",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -82,9 +180,17 @@ const Settings = () => {
               Manage your account and application preferences
             </p>
           </div>
-          <Button onClick={handleSaveChanges} className="btn-primary gap-2">
-            <Save className="h-4 w-4" />
-            Save Changes
+          <Button 
+            onClick={handleSaveChanges} 
+            className="btn-primary gap-2"
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground"></div>
+            ) : (
+              <Save className="h-4 w-4" />
+            )}
+            {isSaving ? "Saving..." : "Save Changes"}
           </Button>
         </motion.div>
 
@@ -109,7 +215,7 @@ const Settings = () => {
                 <Avatar className="h-20 w-20">
                   <AvatarImage src="" />
                   <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
-                    M
+                    {user?.full_name?.[0]?.toUpperCase() || "U"}
                   </AvatarFallback>
                 </Avatar>
                 <div className="space-y-2">

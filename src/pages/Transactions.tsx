@@ -164,8 +164,13 @@ const Transactions = () => {
   };
 
   const handleAddNewTransaction = () => {
-    setTransactionToEdit(null);
-    setIsModalOpen(true);
+    try {
+      console.log('Opening add transaction modal...');
+      setTransactionToEdit(null);
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error('Error opening add transaction modal:', error);
+    }
   };
 
   const handleEditTransaction = (transaction: Transaction) => {
